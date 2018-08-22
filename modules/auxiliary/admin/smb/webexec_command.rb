@@ -55,7 +55,15 @@ class MetasploitModule < Msf::Auxiliary
         print_error("Unable to authenticate with given credentials: #{autherror}")
         return
       end
-      wexec(datastore['COMMAND'], true)
+
+      command = datastore['COMMAND']
+      puts(datastore['FORCE_GUI'])
+      puts(datastore['FORCE_GUI'].class)
+      if(datastore['FORCE_GUI'] == "true")
+        puts("!!!!")
+        command = "WMIC PROCESS CALL Create \"#{command}\""
+      end
+      wexec(command, true)
 
       print_good("Command completed!")
       disconnect
