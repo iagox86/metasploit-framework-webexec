@@ -57,10 +57,7 @@ class MetasploitModule < Msf::Auxiliary
       end
 
       command = datastore['COMMAND']
-      puts(datastore['FORCE_GUI'])
-      puts(datastore['FORCE_GUI'].class)
       if(datastore['FORCE_GUI'] == "true")
-        puts("!!!!")
         command = "WMIC PROCESS CALL Create \"#{command}\""
       end
       wexec(command, true)
@@ -69,5 +66,4 @@ class MetasploitModule < Msf::Auxiliary
       disconnect
     end
   end
-
 end
