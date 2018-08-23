@@ -60,7 +60,10 @@ class MetasploitModule < Msf::Auxiliary
       if(datastore['FORCE_GUI'] == "true")
         command = "WMIC PROCESS CALL Create \"#{command}\""
       end
-      wexec(command, true)
+
+      wexec(true) do |opts|
+        execute_command(command, opts)
+      end
 
       print_good("Command completed!")
       disconnect
