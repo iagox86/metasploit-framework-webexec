@@ -38,8 +38,6 @@ class MetasploitModule < Msf::Auxiliary
 
     register_advanced_options([
     ])
-
-    deregister_options('RHOST')
   end
 
   # This is the main controle method
