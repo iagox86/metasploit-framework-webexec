@@ -62,7 +62,7 @@ class MetasploitModule < Msf::Auxiliary
       end
 
       wexec(true) do |opts|
-        execute_command(command, opts)
+        execute_single_command(command, opts)
       end
 
       print_good("Command completed!")
