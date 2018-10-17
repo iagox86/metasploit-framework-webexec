@@ -131,8 +131,8 @@ module DispatcherShell
     #
     # Wraps shell.update_prompt
     #
-    def update_prompt(prompt=nil, prompt_char = nil, mode = false)
-      shell.update_prompt(prompt, prompt_char, mode)
+    def update_prompt(*args)
+      shell.update_prompt(*args)
     end
 
     def cmd_help_help
@@ -249,6 +249,16 @@ module DispatcherShell
         matches = ::Readline::FILENAME_COMPLETION_PROC.call(dir)
       end
       matches
+    end
+
+    #
+    # Return a list of possible directory for tab completion.
+    #
+    def tab_complete_directory(str, words)
+      str = '.' + ::File::SEPARATOR if str.empty?
+      dirs = Dir.glob(str.concat('*'), File::FNM_CASEFOLD).select { |x| File.directory?(x) }
+
+      dirs
     end
 
     #
@@ -392,7 +402,7 @@ module DispatcherShell
 
     # Match based on the partial word
     items.find_all { |e|
-      e =~ /^#{str}/i
+      e.downcase.start_with?(str.downcase) || e =~ /^#{str}/i
     # Prepend the rest of the command (or it all gets replaced!)
     }.map { |e|
       tab_words.dup.push(e).join(' ')
@@ -422,7 +432,7 @@ module DispatcherShell
   #
   # Run a single command line.
   #
-  def run_single(line)
+  def run_single(line, propagate_errors: false)
     arguments = parse_line(line)
     method    = arguments.shift
     found     = false
@@ -443,17 +453,28 @@ module DispatcherShell
             run_command(dispatcher, method, arguments)
             found = true
           end
+        rescue ::Interrupt
+          found = true
+          print_error("#{method}: Interrupted")
+          raise if propagate_errors
+        rescue OptionParser::ParseError => e
+          print_error("#{method}: #{e.message}")
+          raise if propagate_errors
         rescue
           error = $!
 
           print_error(
             "Error while running command #{method}: #{$!}" +
             "\n\nCall stack:\n#{$@.join("\n")}")
-        rescue ::Exception
+
+          raise if propagate_errors
+        rescue ::Exception => e
           error = $!
 
           print_error(
             "Error while running command #{method}: #{$!}")
+
+          raise if propagate_errors
         end
 
         # If the dispatcher stack changed as a result of this command,
@@ -480,8 +501,6 @@ module DispatcherShell
     else
       dispatcher.send('cmd_' + method, *arguments)
     end
-  rescue OptionParser::ParseError => e
-    print_error("#{method}: #{e.message}")
   ensure
     self.busy = false
   end
